@@ -1,0 +1,497 @@
+<!doctype html>
+<html>
+<head>
+    <title>Backgammon</title>
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: url(img/baize.jpg) no-repeat 0 0;
+            background-size: cover;
+        }
+
+        #board {
+            border: 20px solid rgba(108,62,29,0.9);
+            border-radius: 10px;
+            border-width: 20px 24px;
+            overflow: hidden;
+            display: inline-block;
+            background: url(img/bg.jpg) no-repeat 0 0;
+            background-size: cover;
+            background-origin: border-box;
+            box-shadow: 0 0 15px;
+            position: relative;
+            background-color: #000;
+            position: relative;
+        }
+
+        .topboard, .bottomboard {
+            position: relative;
+            overflow: hidden;
+
+        }
+
+        .topboard {
+            padding-bottom: 30px;
+        }
+
+        .outer {
+            border-right: 15px solid #6F3E20;
+            overflow: hidden;
+            display: inline-block;
+            float: left;
+            clear: left;
+        }
+        .inner {
+            border-left: 15px solid #6F3E20;
+            overflow: hidden;
+            display: inline-block;
+            float: left;
+            clear: right;
+        }
+
+        .position {
+            height: 0px;
+            width: 0px;
+            border-left: 36px solid transparent;
+            border-right: 36px solid transparent;
+            display: inline-block;
+            float: left;
+            display: relative:
+        }
+
+        .topboard .position {
+            border-top: 300px solid  rgba(250,45,45,0.6);
+        }
+
+        .topboard .position:after {
+        }
+
+        .topboard .position:nth-child(even) {
+            border-top: 300px solid rgba(250,250,250,0.8);
+        }
+
+        .bottomboard .position {
+            border-bottom: 300px solid rgba(250,250,250,0.8);
+        }
+
+        .bottomboard .position:nth-child(even) {
+            border-bottom: 300px solid rgba(250,45,45,0.6);
+        }
+
+/*** männle ***/
+
+        .piece {
+            height: 60px;
+            width: 60px;
+            border-radius: 30px;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            pointer-events: none;
+             -webkit-transition: top .4s cubic-bezier(.36,.74,1,1.27), left .4s linear;
+            transition: top .4s cubic-bezier(.36,.74,1,1.27), left .4s linear;
+        }
+
+        .red.piece {
+            background: radial-gradient(ellipse at center, rgba(140,51,16,1) 0%,rgba(140,51,16,1) 6%,rgba(188,107,77,1) 32%,rgba(140,51,16,1) 49%,rgba(191,110,78,1) 55%,rgba(140,51,16,1) 62%,rgba(117,34,1,1) 63%,rgba(140,51,16,1) 88%);
+        }
+
+        .white.piece {
+            background: white;
+            border: 1px solid black;
+            border-radius: 30px;
+        }
+
+        .position1 {
+            top: 0px;
+        }
+        .position2 {
+            top: 60px;
+        }
+        .position3 {
+            top: 120px;
+        }
+        .position4 {
+            top: 180px;
+        }
+        .position5 {
+            top: 240px;
+        }
+
+        .lower.position1 {
+            top: 569px;
+        }
+        .lower.position2 {
+            top: 509px;
+        }
+        .lower.position3 {
+            top: 449px;
+        }
+        .lower.position4 {
+            top: 389px;
+        }
+        .lower.position5 {
+            top: 329px;
+        }
+
+        .white.position1 {
+            bottom: 0px;
+        }
+        .white.position2 {
+            bottom: 60px;
+        }
+        .white.position3 {
+            bottom: 120px;
+        }
+        .white.position4 {
+            bottom: 180px;
+        }
+        .white.position5 {
+            bottom: 240px;
+        }
+
+        .spike1, .spike24 {
+            left: 828px;
+        }
+        .spike2, .spike23 {
+            left: 756px;
+        }
+        .spike3, .spike22 {
+            left: 684px;
+        }
+        .spike4, .spike21 {
+            left: 612px;
+        }
+        .spike5, .spike20 {
+            left: 540px;
+        }
+        .spike6, .spike19 {
+            left: 468px;
+        }
+        .spike7, .spike18 {
+            left: 366px;
+        }
+        .spike8, .spike17 {
+            left: 294px;
+        }
+        .spike9, .spike16 {
+            left: 222px;
+        }
+        .spike10 , .spike15{
+            left: 150px;
+        }
+        .spike11, .spike14 {
+            left: 78px;
+        }
+        .spike12, .spike13 {
+            left: 6px;
+        }
+
+/*** never say die ***/
+
+        .die.one .dot {
+            box-shadow: 0 .2em 0 #FFF
+        }
+        .die.two .dot {
+            background: transparent;
+            box-shadow: -2.3em -2.3em 0 #345,
+                     2.3em  2.3em 0 #345,
+                    -2.3em -2.3em 0 #FFF,
+                     2.3em  2.4em 0 #FFF
+        }
+        .die.three .dot {
+            box-shadow: -2.3em -2.3em 0 #345,
+                     2.3em  2.3em 0 #345,
+                    -2.3em -2.3em 0 #FFF,
+                     2.3em  2.4em 0 #FFF,
+                         0   .2em 0 #FFF
+        }
+        .die.four .dot {
+            background: transparent;
+                box-shadow: -2.3em -2.3em 0 #345,
+                         2.3em  2.3em 0 #345,
+                        -2.3em  2.3em 0 #345,
+                         2.3em -2.3em 0 #345,
+                        -2.3em -2.3em 0 #FFF,
+                         2.3em  2.4em 0 #FFF,
+                        -2.3em  2.4em 0 #FFF,
+                         2.3em -2.3em 0 #FFF
+        }
+        .die.five .dot {
+            box-shadow: -2.3em -2.3em 0 #345,
+                     2.3em  2.3em 0 #345,
+                    -2.3em  2.3em 0 #345,
+                     2.3em -2.3em 0 #345,
+                    -2.3em -2.2em 0 #FFF,
+                     2.3em -2.2em 0 #FFF,
+                     2.3em  2.4em 0 #FFF,
+                    -2.3em  2.4em 0 #FFF,
+                         0   .2em 0 #FFF
+        }
+        .die.six .dot {
+            background: transparent;
+            box-shadow: -2.3em -2.3em 0 #345,
+                    -2.3em      0 0 #345,
+                    -2.3em  2.3em 0 #345,
+                     2.3em -2.3em 0 #345,
+                     2.3em      0 0 #345,
+                     2.3em  2.3em 0 #345,
+                    -2.3em -2.1em 0 #FFF,
+                    -2.3em   .2em 0 #FFF,
+                    -2.3em  2.4em 0 #FFF,
+                     2.3em  2.4em 0 #FFF,
+                     2.3em   .2em 0 #FFF,
+                     2.3em -2.1em 0 #FFF
+        }
+        .die {
+            border-top: 1px solid #f1f1f1;
+            width: 50px; height: 50px;
+            border-radius: 10px;
+            position: relative;
+            margin: 10px;
+            font-size: 6px;
+            display: inline-block;
+            box-shadow: 0px 5px 0 #CCC, 0 6px 3px #444, 0 10px 5px #999;
+            background-image: linear-gradient(top, #fefefe, #f1f1f1 80%);
+            background: white;
+        }
+        .dot {
+            width: 20%;
+            height: 20%;
+            left: 50%;
+            top: 50%;
+            margin: -10%;
+            background: #345;
+            border-radius: 50%;
+            display: block;
+            position: absolute;
+        }
+
+    </style>
+    <script>
+
+        var $ = function(el){return document.getElementById(el)};
+
+        var BackGammon = (function() {
+
+            var maxMen = 5,
+                initialPositions = {
+                    red: [6,6,6,6,6,8,8,8,13,13,13,13,13,24,24],
+                    white: [1,1,12,12,12,12,12,17,17,17,19,19,19,19,19]
+                };
+
+            var Piece = function(colour) {
+            //         <div class="red piece spike7 position1" id="piece1"></div>
+                var root = document.createElement("DIV");
+                return {
+                    root: root,
+                    colour: colour,
+                    currentSpike: undefined,
+                    currentPosition: undefined
+                }
+            };
+
+            var Spike = function(n) {
+                var root = $("spike" + n),
+                    thisSpike = n,
+                    currentColour,
+                    pieces = [],
+                    addPiece,
+                    getPieces;
+                addPiece = function(piece) {
+                    var classes = ["piece"];
+                    if(pieces.length === maxMen) {
+                        return false
+                    } else {
+                        if (currentColour) {
+                            if (Piece.colour !== currentColour) {
+                                return false;
+                            }
+                        } else {
+                            currentColour = Piece.colour;
+                        }
+                        pieces.push(Piece);
+                        piece.currentSpike = thisSpike;
+                        piece.currentPosition = pieces.length;
+                        classes.push(piece.colour);
+                        classes.push("spike" + thisSpike);
+                        classes.push("position" + (pieces.length));
+                        if(thisSpike > 12){
+                            classes.push("lower");
+                        }
+                        piece.root.className = classes.join(" ");
+                        return piece;
+                    }
+                };
+                removePiece = function() {
+                    if (pieces.length === 1) {
+                        currentColour = undefined;
+                    }
+                    return pieces.pop();
+                };
+                getTopPiece = function() {
+                    return pieces[pieces.length-1];
+                };
+                root.addEventListener("click", function(e) {
+                    if(pieces.length) {
+                        Controller.spikeClicked(thisSpike);
+                    } else {
+                        return false;
+                    }
+
+                }, false);
+                return {
+                    addPiece: addPiece,
+                    removePiece: removePiece,
+                    id: thisSpike
+                }
+            };
+
+            var Dice = function() {
+                var root,
+                    roll;
+
+                root = document.createElement("DIV");
+                root.className = "die";
+                root.innerHTML = '<span class="dot"></span>';
+
+                roll = function() {
+                    var rolled = Math.floor(Math.random()*6);
+                    var newclassname = "die " + ["one","two","three","four","five","six"][rolled];
+                    root.className = newclassname;
+                    return rolled + 1;
+                };
+                return {
+                    root: root,
+                    roll: roll
+                }
+            };
+
+            var createDice = function() {
+                var dice1,
+                    dice2,
+                    trigger,
+                    rollDice;
+
+                dice1 = Dice();
+                dice2 = Dice();
+                trigger = document.createElement("button");
+                trigger.value = "roll";
+                rollDice = function() {
+                    var rolled = [];
+                    rolled[0] = dice1.roll();
+                    rolled[1] = dice2.roll();
+                    return rolled;
+                };
+                return {
+                    rollDice: rollDice
+                }
+            };
+
+            var Controller = (function() {
+                var currentPlayer = "red",
+                    spikeClicked,
+                    whoseTurn,
+                    isBearingOff,
+                    isGameOver,
+                    spikes = [],
+                    endGo,
+                    i,
+                    status = {
+                        rolldice: "ROLLDICE",
+                        redmove: "REDMOVE",
+                        whitemove: "WHITEMOVE"
+                    }
+
+                endGo = function() {
+                    currentPlayer = (currentPlayer === "red" ? "white" : "red");
+                },
+
+                spikeClicked = function() {
+
+
+                },
+
+                createGame = function() {
+                    var piece,
+                        board = $("board"),
+                        rollingArea = $("rollingArea");
+                     for (i = 0; i < 24; i++) {
+                        var newSpike = Spike(i+1)
+                        spikes.push(newSpike);
+                    }
+                    for(var colour in BackGammon.initialPositions) {
+                        for (var i = 0; i <  BackGammon.initialPositions[colour].length; i++) {
+                            var newPiece = Piece(colour);
+                            piece = spikes[BackGammon.initialPositions[colour][i] - 1].addPiece(newPiece);
+                            $("board").appendChild(piece.root);
+                        }
+                    }
+                }
+
+                return {
+                    spikeClicked: spikeClicked,
+                    createGame: createGame
+                }
+
+            })();
+
+            var init = function() {
+                Controller.createGame();
+            };
+
+            return {
+                init: init,
+                initialPositions: initialPositions
+            }
+
+        }());
+
+    window.addEventListener("load", BackGammon.init, false);
+
+    </script>
+</head>
+<body>
+    <div id="board">
+        <div id="redouter" class="topboard outer">
+            <div id="spike12" class="position"></div>
+            <div id="spike11" class="position"></div>
+            <div id="spike10" class="position"></div>
+            <div id="spike9" class="position"></div>
+            <div id="spike8" class="position"></div>
+            <div id="spike7" class="position"></div>
+        </div>
+        <div id="redinner" class="topboard inner">
+            <div id="spike6" class="position"></div>
+            <div id="spike5" class="position"></div>
+            <div id="spike4" class="position"></div>
+            <div id="spike3" class="position"></div>
+            <div id="spike2" class="position"></div>
+            <div id="spike1" class="position"></div>
+        </div>
+
+        <div id="whiteouter" class="bottomboard outer">
+            <div id="spike13" class="position"></div>
+            <div id="spike14" class="position"></div>
+            <div id="spike15" class="position"></div>
+            <div id="spike16" class="position"></div>
+            <div id="spike17" class="position"></div>
+            <div id="spike18" class="position"></div>
+        </div>
+        <div id="whiteinner" class="bottomboard inner">
+            <div id="spike19" class="position"></div>
+            <div id="spike20" class="position"></div>
+            <div id="spike21" class="position"></div>
+            <div id="spike22" class="position"></div>
+            <div id="spike23" class="position"></div>
+            <div id="spike24" class="position"></div>
+        </div>
+    </div>
+    <div id="rollingArea"></div>
+
+</body>
+</html>
