@@ -28,6 +28,36 @@
             position: relative;
         }
 
+        #rollingArea {
+            display: inline-block;
+            vertical-align: bottom;
+        }
+
+        #dice {
+            width: 140px;
+            margin: 20px;
+        }
+
+        #rollem {
+            width: 140px;
+            background: white;
+            border: 1px solid black;
+            padding: 20px;
+            margin: 20px;
+            font-family: Tahoma;
+            font-size: 24px;
+            border-top: 1px solid #f1f1f1;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0px 5px 0 #CCC, 0 6px 3px #444, 0 7px 5px #999;
+            background-image: linear-gradient(top, #fefefe, #f1f1f1 80%);
+            background: white;
+        }
+
+        #rollem:active {
+            box-shadow: 0px;
+        }
+
         .topboard, .bottomboard {
             position: relative;
             overflow: hidden;
@@ -102,8 +132,9 @@
 
         .white.piece {
             background: white;
-            border: 1px solid black;
+            border: 2px solid #666;
             border-radius: 30px;
+            background: radial-gradient(ellipse at center, rgba(44,44,44,1) 0%, rgba(244,244,244,1) 26%, rgba(244,244,244,1) 45%, rgba(44,44,44,1) 67%, rgba(244,244,244,1) 78%);
         }
 
         .position1 {
@@ -284,6 +315,10 @@
                     white: [1,1,12,12,12,12,12,17,17,17,19,19,19,19,19]
                 };
 
+            var error = function(err) {
+                alert(err);
+            };
+
             var Piece = function(colour) {
             //         <div class="red piece spike7 position1" id="piece1"></div>
                 var root = document.createElement("DIV");
@@ -308,13 +343,13 @@
                         return false
                     } else {
                         if (currentColour) {
-                            if (Piece.colour !== currentColour) {
+                            if (piece.colour !== currentColour) {
                                 return false;
                             }
                         } else {
-                            currentColour = Piece.colour;
+                            currentColour = piece.colour;
                         }
-                        pieces.push(Piece);
+                        pieces.push(piece);
                         piece.currentSpike = thisSpike;
                         piece.currentPosition = pieces.length;
                         classes.push(piece.colour);
@@ -328,10 +363,15 @@
                     }
                 };
                 removePiece = function() {
-                    if (pieces.length === 1) {
-                        currentColour = undefined;
+                    if (currentColour === Controller.currentPlayer) {
+                        if (pieces.length === 1){
+                            currentColour = undefined;
+                        }
+                        return pieces.pop();
+                    } else {
+                        error("not your piece");
+                        return false;
                     }
-                    return pieces.pop();
                 };
                 getTopPiece = function() {
                     return pieces[pieces.length-1];
@@ -354,11 +394,9 @@
             var Dice = function() {
                 var root,
                     roll;
-
                 root = document.createElement("DIV");
                 root.className = "die";
                 root.innerHTML = '<span class="dot"></span>';
-
                 roll = function() {
                     var rolled = Math.floor(Math.random()*6);
                     var newclassname = "die " + ["one","two","three","four","five","six"][rolled];
@@ -375,10 +413,14 @@
                 var dice1,
                     dice2,
                     trigger,
-                    rollDice;
-
+                    rollDice,
+                    root;
+                root = document.createElement("div");
+                root.id = "dice";
                 dice1 = Dice();
                 dice2 = Dice();
+                root.appendChild(dice1.root);
+                root.appendChild(dice2.root);
                 trigger = document.createElement("button");
                 trigger.value = "roll";
                 rollDice = function() {
@@ -388,18 +430,23 @@
                     return rolled;
                 };
                 return {
+                    root: root,
                     rollDice: rollDice
                 }
+            };
+
+            var createDiceRoller = function() {
+
+
             };
 
             var Controller = (function() {
                 var currentPlayer = "red",
                     spikeClicked,
-                    whoseTurn,
-                    isBearingOff,
+                    lastRoll = [],
+                    diceRolled,
                     isGameOver,
                     spikes = [],
-                    endGo,
                     i,
                     status = {
                         rolldice: "ROLLDICE",
@@ -407,19 +454,31 @@
                         whitemove: "WHITEMOVE"
                     }
 
-                endGo = function() {
-                    currentPlayer = (currentPlayer === "red" ? "white" : "red");
-                },
-
-                spikeClicked = function() {
-
-
+                spikeClicked = function(n) {
+                    var spike = spikes[n-1],
+                        multiplier = currentPlayer == "red" ? 1 : -1;
+                        piece = spike.removePiece();
+                    if (lastRoll.length && piece) {
+                        var thing = spikes[n -1 + (multiplier *  lastRoll[0])].addPiece(piece);
+                        console.log("thing", thing)
+                        if(lastRoll[1]) {
+                            lastRoll = [lastRoll[1]]
+                        } else {
+                            lastRoll = [];
+                            status = status.rolldice;
+                            currentPlayer = currentPlayer === "red" ? "white" : "red";
+                        }
+                    } else {
+                        error("roll the dice!");
+                    }
                 },
 
                 createGame = function() {
                     var piece,
                         board = $("board"),
-                        rollingArea = $("rollingArea");
+                        rollingArea = $("rollingArea"),
+                        clickToRoll,
+                        rollDice;
                      for (i = 0; i < 24; i++) {
                         var newSpike = Spike(i+1)
                         spikes.push(newSpike);
@@ -431,10 +490,24 @@
                             $("board").appendChild(piece.root);
                         }
                     }
+                    var rollDice = function() {
+                        lastRoll = dice.rollDice();
+                    }
+                    dice = createDice();
+                    clickToRoll = document.createElement("BUTTON");
+                    clickToRoll.id = "rollem";
+                    clickToRoll.innerHTML = "roll 'em";
+                    rollingArea.appendChild(dice.root);
+                    rollingArea.appendChild(clickToRoll);
+                    clickToRoll.addEventListener("click", rollDice, false)
+                    //  dice.rollDice = [];
+                    // make something to click to roll the dice
                 }
 
                 return {
+                    currentPlayer: currentPlayer,
                     spikeClicked: spikeClicked,
+                    diceRolled: diceRolled,
                     createGame: createGame
                 }
 
@@ -492,6 +565,5 @@
         </div>
     </div>
     <div id="rollingArea"></div>
-
 </body>
 </html>
