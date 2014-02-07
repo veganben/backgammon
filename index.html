@@ -33,6 +33,11 @@
             vertical-align: bottom;
         }
 
+        #rollingArea.inactive #rollem, .die.inactive {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
         #dice {
             width: 140px;
             margin: 20px;
@@ -307,6 +312,29 @@
 
         var $ = function(el){return document.getElementById(el)};
 
+        var dom = {
+            addClassName: function(el,nom) {
+                if(el) {
+                    var ecn = (!!el&&el.className)?el.className:"";
+                    if(ecn.indexOf(nom)<0) {
+                        el.className = ecn + " " + nom;
+                    }
+                }
+            },
+            /**
+             * yes, it adds unnecessary whitespace
+             */
+            removeClassName: function(el,nom) {
+                if(el) {
+                    var cn = el.className || "";
+                    var reg = new RegExp();
+                    reg.compile("\\s\{1\,\}|\\b"+ nom + "\\b","gi");
+                    var cnn = cn.replace(reg," ");
+                    el.className = cnn;
+                }
+            }
+        }
+
         var BackGammon = (function() {
 
             var maxMen = 5,
@@ -344,6 +372,7 @@
                     } else {
                         if (currentColour) {
                             if (piece.colour !== currentColour) {
+                            // capturing goes here: pieces.length == 1
                                 return false;
                             }
                         } else {
@@ -369,7 +398,6 @@
                         }
                         return pieces.pop();
                     } else {
-                        error("not your piece");
                         return false;
                     }
                 };
@@ -395,7 +423,7 @@
                 var root,
                     roll;
                 root = document.createElement("DIV");
-                root.className = "die";
+                root.className = "die inactive";
                 root.innerHTML = '<span class="dot"></span>';
                 roll = function() {
                     var rolled = Math.floor(Math.random()*6);
@@ -410,63 +438,80 @@
             };
 
             var createDice = function() {
-                var dice1,
-                    dice2,
-                    trigger,
+                var dices,
+                    flip,
                     rollDice,
                     root;
                 root = document.createElement("div");
                 root.id = "dice";
-                dice1 = Dice();
-                dice2 = Dice();
-                root.appendChild(dice1.root);
-                root.appendChild(dice2.root);
-                trigger = document.createElement("button");
-                trigger.value = "roll";
+                dices = [Dice(), Dice()];
+                root.appendChild(dices[0].root);
+                root.appendChild(dices[1].root);
+                flip = function() {
+                    var dice1className = dices[0].root.className,
+                        dice2className = dices[1].root.className;
+                    if(dice1className.indexOf("inactive") == -1){
+                        dices[0].root.className = dice2className;
+                        dices[1].root.className = dice1className;
+                    }
+                    Controller.diceFlipped();
+                };
                 rollDice = function() {
-                    var rolled = [];
-                    rolled[0] = dice1.roll();
-                    rolled[1] = dice2.roll();
+                    var rolled = [dices[0].roll(), dices[1].roll()];
+                    dom.removeClassName(dices[0].root, "inactive");
+                    dom.removeClassName(dices[1].root, "inactive");
                     return rolled;
+                };
+                makeInactive = function(n) {
+                    dom.addClassName(dices[n].root, "inactive");
                 };
                 return {
                     root: root,
-                    rollDice: rollDice
+                    flip: flip,
+                    rollDice: rollDice,
+                    makeInactive: makeInactive
                 }
-            };
-
-            var createDiceRoller = function() {
-
-
             };
 
             var Controller = (function() {
                 var currentPlayer = "red",
                     spikeClicked,
                     lastRoll = [],
-                    diceRolled,
+                    diceFlipped,
                     isGameOver,
                     spikes = [],
-                    i,
-                    status = {
-                        rolldice: "ROLLDICE",
-                        redmove: "REDMOVE",
-                        whitemove: "WHITEMOVE"
-                    }
+                    i;
+
+                diceFlipped = function() {
+                    lastRoll.reverse();
+                };
 
                 spikeClicked = function(n) {
                     var spike = spikes[n-1],
-                        multiplier = currentPlayer == "red" ? 1 : -1;
+                        multiplier = (Controller.currentPlayer == "red" ? -1 : 1),
+                        piece,
+                        wasAdded;
+                    if (lastRoll.length) {
                         piece = spike.removePiece();
-                    if (lastRoll.length && piece) {
-                        var thing = spikes[n -1 + (multiplier *  lastRoll[0])].addPiece(piece);
-                        console.log("thing", thing)
-                        if(lastRoll[1]) {
-                            lastRoll = [lastRoll[1]]
+                        if (piece) {
+                            wasAdded = spikes[(n - 1) + (multiplier *  lastRoll[0])].addPiece(piece);
+                            if(wasAdded) {
+                                if(lastRoll[1]) {
+                                    lastRoll = [lastRoll[1]];
+                                    dice.makeInactive(0);
+                                } else {
+                                    // debugger;
+                                    lastRoll = [];
+                                    dice.makeInactive(1);
+                                    dom.removeClassName($("rollingArea"), "inactive");
+                                    // status = status.rolldice;
+                                    Controller.currentPlayer = (Controller.currentPlayer === "red" ? "white" : "red");
+                                }
+                            } else {
+                                error("you can't move there");
+                            }
                         } else {
-                            lastRoll = [];
-                            status = status.rolldice;
-                            currentPlayer = currentPlayer === "red" ? "white" : "red";
+                            error("not your piece");
                         }
                     } else {
                         error("roll the dice!");
@@ -491,7 +536,14 @@
                         }
                     }
                     var rollDice = function() {
-                        lastRoll = dice.rollDice();
+                        var rollingArea = $("rollingArea")
+                        if(lastRoll.length == 0) {
+                            lastRoll = dice.rollDice();
+                            dom.addClassName(rollingArea, "inactive");
+                            $("rollem").blur();
+                        } else {
+                            error("still got moves to move");
+                        }
                     }
                     dice = createDice();
                     clickToRoll = document.createElement("BUTTON");
@@ -499,6 +551,7 @@
                     clickToRoll.innerHTML = "roll 'em";
                     rollingArea.appendChild(dice.root);
                     rollingArea.appendChild(clickToRoll);
+                    dice.root.addEventListener("click", dice.flip, false);
                     clickToRoll.addEventListener("click", rollDice, false)
                     //  dice.rollDice = [];
                     // make something to click to roll the dice
@@ -507,7 +560,7 @@
                 return {
                     currentPlayer: currentPlayer,
                     spikeClicked: spikeClicked,
-                    diceRolled: diceRolled,
+                    diceFlipped: diceFlipped,
                     createGame: createGame
                 }
 
