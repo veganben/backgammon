@@ -13,6 +13,25 @@
             background-size: cover;
         }
 
+        .spike6:nth-of-type(1) {
+            margin-top: 10px;
+        }
+        .spike6:nth-of-type(2) {
+            margin-top: 20px;
+        }
+        .spike6:nth-of-type(3) {
+            margin-top: 30px;
+        }
+        .spike6:nth-of-type(4) {
+            margin-top: 40px;
+        }
+        .spike6:nth-of-type(5) {
+            margin-top: 50px;
+        }
+        .spike6:nth-of-type(6) {
+            margin-top: 60px;
+        }
+
         #board {
             border: 20px solid rgba(108,62,29,0.9);
             border-radius: 10px;
@@ -66,7 +85,6 @@
         .topboard, .bottomboard {
             position: relative;
             overflow: hidden;
-
         }
 
         .topboard {
@@ -74,18 +92,34 @@
         }
 
         .outer {
-            border-right: 15px solid #6F3E20;
+            border-right: 36px solid #6F3E20;
             overflow: hidden;
             display: inline-block;
             float: left;
             clear: left;
         }
         .inner {
-            border-left: 15px solid #6F3E20;
+            border-left: 36px solid #6F3E20;
             overflow: hidden;
             display: inline-block;
             float: left;
             clear: right;
+        }
+
+        .bar {
+            position: absolute;
+            left: 439px;
+            width: 60px;
+            height: 300px;
+            z-index: 10;
+        }
+
+        #redbar {
+            top: 0px;
+        }
+
+        #whitebar {
+            top: 329px;
         }
 
         .position {
@@ -127,8 +161,10 @@
             top: 0px;
             left: 0px;
             pointer-events: none;
-             -webkit-transition: top .4s cubic-bezier(.36,.74,1,1.27), left .4s linear;
-            transition: top .4s cubic-bezier(.36,.74,1,1.27), left .4s linear;
+             -webkit-transition: top .4s cubic-bezier(.36,.74,1,1.27),
+                left .4s cubic-bezier(.36,.74,1,1.27);
+            transition: top .4s cubic-bezier(.36,.74,1,1.27),
+                left .4s cubic-bezier(.36,.74,1,1.27);
         }
 
         .red.piece {
@@ -158,6 +194,15 @@
             top: 240px;
         }
 
+        .spikeBAR {
+            left: 439px;
+            top: 10px;
+        }
+
+        .lower.spikeBAR {
+            top: 559px;
+        }
+
         .lower.position1 {
             top: 569px;
         }
@@ -174,39 +219,27 @@
             top: 329px;
         }
 
-        .white.position1 {
-            bottom: 0px;
-        }
-        .white.position2 {
-            bottom: 60px;
-        }
-        .white.position3 {
-            bottom: 120px;
-        }
-        .white.position4 {
-            bottom: 180px;
-        }
-        .white.position5 {
-            bottom: 240px;
+        .spikeBAR {
+            left: 439px;
         }
 
         .spike1, .spike24 {
-            left: 828px;
+            left: 870px;
         }
         .spike2, .spike23 {
-            left: 756px;
+            left: 798px;
         }
         .spike3, .spike22 {
-            left: 684px;
+            left: 726px;
         }
         .spike4, .spike21 {
-            left: 612px;
+            left: 654px;
         }
         .spike5, .spike20 {
-            left: 540px;
+            left: 582px;
         }
         .spike6, .spike19 {
-            left: 468px;
+            left: 510px;
         }
         .spike7, .spike18 {
             left: 366px;
@@ -365,30 +398,44 @@
                     pieces = [],
                     addPiece,
                     getPieces;
+
                 addPiece = function(piece) {
-                    var classes = ["piece"];
+                    var classes = ["piece"],
+                        sendToBar = false,
+                        barPiece;
                     if(pieces.length === maxMen) {
                         return false
                     } else {
                         if (currentColour) {
                             if (piece.colour !== currentColour) {
-                            // capturing goes here: pieces.length == 1
-                                return false;
+                                if(pieces.length === 1) {
+                                    sendToBar = true;
+                                } else {
+                                    return false;
+                                }
                             }
                         } else {
                             currentColour = piece.colour;
                         }
                         pieces.push(piece);
                         piece.currentSpike = thisSpike;
-                        piece.currentPosition = pieces.length;
                         classes.push(piece.colour);
+                        if (sendToBar) {
+                            barPiece = pieces.shift();
+                            barPiece.isOnBar = true;
+                            currentColour = piece.colour;
+
+                      //      classes.push(currentColour);
+                      //      classes.push("bar");
+                        }
+                        piece.currentPosition = pieces.length;
                         classes.push("spike" + thisSpike);
-                        classes.push("position" + (pieces.length));
                         if(thisSpike > 12){
                             classes.push("lower");
                         }
+                        classes.push("position" + (pieces.length));
                         piece.root.className = classes.join(" ");
-                        return piece;
+                        return (barPiece || piece);
                     }
                 };
                 removePiece = function() {
@@ -416,6 +463,49 @@
                     addPiece: addPiece,
                     removePiece: removePiece,
                     id: thisSpike
+                }
+            };
+
+            var Bar = function(colour) {
+                var root = $(colour + "bar"),
+                    thisBar = colour,
+                    margin,
+                    pieces = [],
+                    isOccupied,
+                    clickBar
+                ;
+                addPiece = function(piece) {
+                    var margin = ((pieces.length) * 20);
+                    pieces.push(piece);
+                    if(thisBar === "red") {
+                        piece.root.style.marginTop = margin + "px";
+                    } else {
+                        piece.root.style.marginTop = (-1 * margin) + "px";
+                    }
+                    piece.root.style.zIndex = pieces.length;
+                };
+                removePiece = function() {
+                    var piece = pieces.pop();
+                    piece.root.style.marginTop = "";
+                    piece.root.style.marginBottom = "";
+                    piece.root.style.zIndex = "inherit";
+                    return piece;
+                }
+
+                isOccupied = function() {
+                    return pieces.length;
+                };
+                clickBar = function() {
+                    if(isOccupied()) {
+                        var piece = removePiece();
+                        Controller.barClicked(piece);
+                    }
+                }
+                root.addEventListener("click", clickBar, false);
+                return {
+                    root: root,
+                    addPiece: addPiece,
+                    isOccupied: isOccupied
                 }
             };
 
@@ -475,40 +565,73 @@
 
             var Controller = (function() {
                 var currentPlayer = "red",
+                    diceFlipped,
+                    addPieceToBar,
+                    barClicked,
                     spikeClicked,
                     lastRoll = [],
-                    diceFlipped,
                     isGameOver,
                     spikes = [],
+                    bars = [],
                     i;
 
                 diceFlipped = function() {
                     lastRoll.reverse();
                 };
-
+                addPieceToBar = function(piece) {
+                    var newClasses = ["piece"];
+                    bars[piece.colour].addPiece(piece);
+                    newClasses.push(piece.colour);
+                    if(piece.colour === "white") {
+                        newClasses.push("lower");
+                    }
+                    newClasses.push("spikeBAR");
+                    setTimeout(function(){piece.root.className = newClasses.join(" ");},600);
+                };
+                barClicked = function(piece) {
+                    // piece is already free from the bar. Simply add to the new spike. (if possible);
+                    var addResult,
+                        spikeToPlace;
+                    spikeToPlace = ((Controller.currentPlayer === "white") ? lastRoll[0] - 1 : 24 - lastRoll[0]);
+                    addResult = spikes[spikeToPlace].addPiece(piece);
+                    if(addResult.isOnBar) {
+                        addPieceToBar(addResult);
+                    } else {
+                        addPieceToBar(piece);
+                        error("would flipping the dice help?");
+                    }
+                };
                 spikeClicked = function(n) {
                     var spike = spikes[n-1],
-                        multiplier = (Controller.currentPlayer == "red" ? -1 : 1),
+                        multiplier = (Controller.currentPlayer === "red" ? -1 : 1),
                         piece,
-                        wasAdded;
+                        addResult;
                     if (lastRoll.length) {
+                        if(bars[Controller.currentPlayer].isOccupied()) {
+                            error("move off the bar first");
+                            return false;
+                        }
                         piece = spike.removePiece();
                         if (piece) {
-                            wasAdded = spikes[(n - 1) + (multiplier *  lastRoll[0])].addPiece(piece);
-                            if(wasAdded) {
+                            addResult = spikes[(n - 1) + (multiplier *  lastRoll[0])].addPiece(piece);
+                            if(addResult.isOnBar) {
+                                addPieceToBar(addResult);
+                            }
+                            if(addResult) {
                                 if(lastRoll[1]) {
                                     lastRoll = [lastRoll[1]];
                                     dice.makeInactive(0);
                                 } else {
-                                    // debugger;
                                     lastRoll = [];
                                     dice.makeInactive(1);
                                     dom.removeClassName($("rollingArea"), "inactive");
-                                    // status = status.rolldice;
                                     Controller.currentPlayer = (Controller.currentPlayer === "red" ? "white" : "red");
                                 }
                             } else {
+                                // put it back!
+                                spike.addPiece(piece);
                                 error("you can't move there");
+
                             }
                         } else {
                             error("not your piece");
@@ -528,6 +651,8 @@
                         var newSpike = Spike(i+1)
                         spikes.push(newSpike);
                     }
+                    bars["red"] = Bar("red");
+                    bars["white"] = Bar("white");
                     for(var colour in BackGammon.initialPositions) {
                         for (var i = 0; i <  BackGammon.initialPositions[colour].length; i++) {
                             var newPiece = Piece(colour);
@@ -559,6 +684,7 @@
 
                 return {
                     currentPlayer: currentPlayer,
+                    barClicked: barClicked,
                     spikeClicked: spikeClicked,
                     diceFlipped: diceFlipped,
                     createGame: createGame
@@ -599,7 +725,8 @@
             <div id="spike2" class="position"></div>
             <div id="spike1" class="position"></div>
         </div>
-
+        <div id="redbar" class="bar"></div>
+        <div id="whitebar" class="bar"></div>
         <div id="whiteouter" class="bottomboard outer">
             <div id="spike13" class="position"></div>
             <div id="spike14" class="position"></div>
