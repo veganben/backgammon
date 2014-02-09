@@ -403,6 +403,10 @@
                     var classes = ["piece"],
                         sendToBar = false,
                         barPiece;
+                    if(piece.isOnBar) {
+                        currentColour = piece.colour;
+                        piece.isOnBar = false;
+                    }
                     if(pieces.length === maxMen) {
                         return false
                     } else {
@@ -433,7 +437,7 @@
                         if(thisSpike > 12){
                             classes.push("lower");
                         }
-                        classes.push("position" + (pieces.length));
+                        classes.push("position" + (sendToBar ? 0 : pieces.length));
                         piece.root.className = classes.join(" ");
                         return (barPiece || piece);
                     }
@@ -496,6 +500,7 @@
                     return pieces.length;
                 };
                 clickBar = function() {
+                    debugger;
                     if(isOccupied()) {
                         var piece = removePiece();
                         Controller.barClicked(piece);
@@ -594,12 +599,21 @@
                         spikeToPlace;
                     spikeToPlace = ((Controller.currentPlayer === "white") ? lastRoll[0] - 1 : 24 - lastRoll[0]);
                     addResult = spikes[spikeToPlace].addPiece(piece);
-                    if(addResult.isOnBar) {
-                        addPieceToBar(addResult);
-                    } else {
-                        addPieceToBar(piece);
-                        error("would flipping the dice help?");
+                    if(addResult) {
+                        if(addResult.isOnBar) {
+                            addPieceToBar(addResult);
+                        }
+                        if(lastRoll[1]) {
+                            dice.makeInactive(0);
+                        } else {
+                            dice.makeInactive(1);
+                        }
+                        lastRoll.shift();
                     }
+                    /*
+                    else {
+                        addPieceToBar(piece);
+                    }*/
                 };
                 spikeClicked = function(n) {
                     var spike = spikes[n-1],
@@ -619,14 +633,13 @@
                             }
                             if(addResult) {
                                 if(lastRoll[1]) {
-                                    lastRoll = [lastRoll[1]];
                                     dice.makeInactive(0);
                                 } else {
-                                    lastRoll = [];
                                     dice.makeInactive(1);
                                     dom.removeClassName($("rollingArea"), "inactive");
                                     Controller.currentPlayer = (Controller.currentPlayer === "red" ? "white" : "red");
                                 }
+                                lastRoll.shift();
                             } else {
                                 // put it back!
                                 spike.addPiece(piece);
